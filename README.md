@@ -1,0 +1,9 @@
+# Laboratory Work 6
+
+[![CI](https://github.com/alvinseville7cf/CSharp---Exercise---Other---Laboratory-Work-6/actions/workflows/ci.yml/badge.svg)](https://github.com/alvinseville7cf/CSharp---Exercise---Other---Laboratory-Work-6/actions/workflows/ci.yml)
+
+This repository is the backup of the corresponding REPL. It contains laboratory work 6 code.
+
+## Notes
+
+Several linters such as markdownlint, shellcheck and gendarme are used in CI. You have to install [Flowgorithm](http://www.flowgorithm.org/index.htm) to open flowchart.
