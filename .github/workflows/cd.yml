@@ -34,6 +34,8 @@ jobs:
     - name: DotNET Core Build
       run: |
         chmod +x netcorebuild.sh && ./netcorebuild.sh "$BUILD_FOLDER_PATH"
+        cd "$BUILD_FOLDER_PATH"
+        tar -cf solution.tar LaboratoryWork.sln Project
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
