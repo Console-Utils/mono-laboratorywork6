@@ -1,0 +1,89 @@
+name: CD
+
+on:
+  push:
+    tags: 'v*'
+
+  workflow_dispatch:
+
+env:
+  BUILD_FOLDER_PATH: bin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Mono Build
+      run: |
+        chmod +x build.sh && ./build.sh
+  
+  netcorebuild:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: DotNET Core Setup
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+    
+    - name: DotNET Core Build
+      run: |
+        chmod +x netcorebuild.sh && ./netcorebuild.sh "$BUILD_FOLDER_PATH"
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: solution
+        path: "${{ env.BUILD_FOLDER_PATH }}/solution.tar"
+        retention-days: 1
+  
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build, netcorebuild]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: solution
+        path: ${{ env.BUILD_FOLDER_PATH }}
+    
+    - name: Unarchive Artifacts
+      run: |
+        cd "$BUILD_FOLDER_PATH"
+        tar -xf solution.tar
+        rm -f solution.tar
+    - name: Convert Flowchart
+      run: |
+        sudo apt update
+        sudo apt-get install -y libappindicator3-1
+        
+        sudo apt -y install wget
+        wget https://github.com/jgraph/drawio-desktop/releases/download/v12.3.2/draw.io-amd64-12.3.2.deb
+        sudo dpkg -i draw.io-amd64-12.3.2.deb
+        sudo apt -y -f install
+        
+        export DISPLAY=:1
+        xvfb-run -a drawio -a -x -o "$BUILD_FOLDER_PATH/flowchart.pdf" flowchart.drawio --no-sandbox --headless --disable-gpu
+    
+    - name: Archive
+      run: |
+        cd "$BUILD_FOLDER_PATH"
+        tar -cf release.tar *
+    - name: Environment Variable Setup
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Publish Build to GitHub
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "${{ env.RELEASE_VERSION }}"
+        prerelease: false
+        title: "${{ env.RELEASE_VERSION }} Build"
+        files: ${{ env.BUILD_FOLDER_PATH }}/release.tar

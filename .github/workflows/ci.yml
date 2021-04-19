@@ -1,55 +1,74 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches: master
 
   workflow_dispatch:
+
+env:
+  BUILD_FOLDER_PATH: bin
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Mono Build
-        run: |
-          chmod +x build.sh && ./build.sh
-        
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: program
-          path: main.exe
-          retention-days: 1
-  
-  lint:
+    - name: Mono Build
+      run: |
+        chmod +x build.sh && ./build.sh
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: program
+        path: main.exe
+        retention-days: 1
+
+  netcorebuild:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Markdown Check
-        run: |
-          sudo chown -R $(whoami) /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
-          npm install -g markdownlint-cli
-          markdownlint *.md
-      - name: Shell Check
-        if: always()
-        run: |
-          sudo apt-get install shellcheck
-          shellcheck *.sh
+    - name: DotNET Core Setup
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: program
-      - name: CSharp Check
-        if: always()
-        run: |
-          sudo apt update
-          sudo apt-get install gendarme
-          gendarme -- *.exe
+    - name: NET Core Build
+      run: |
+        chmod +x netcorebuild.sh && ./netcorebuild.sh "$BUILD_FOLDER_PATH"
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [build, netcorebuild]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Markdown Check
+      run: |
+        sudo chown -R $(whoami) /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
+        npm install -g markdownlint-cli
+        shopt -s globstar
+        markdownlint **/*.md
+    - name: Shell Check
+      if: always()
+      run: |
+        shopt -s globstar
+        shellcheck **/*.sh
+
+    - name: Download Artifacts
+      if: always()
+      uses: actions/download-artifact@v2
+      with:
+        name: program
+    - name: CSharp Check
+      if: always()
+      run: |
+        sudo apt-get update
+        sudo apt-get install gendarme
+        gendarme -- *.exe
