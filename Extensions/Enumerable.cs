@@ -18,7 +18,7 @@ namespace LaboratoryWork.Extensions
       Console.Write(enumerator.Current);
 
       while (enumerator.MoveNext())
-          Console.Write($"{delimiter}{enumerator.Current}");
+          Console.Write("{0}{1}", delimiter, enumerator.Current);
 
       return sequence;
     }
