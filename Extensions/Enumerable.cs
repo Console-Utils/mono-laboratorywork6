@@ -12,17 +12,15 @@ namespace LaboratoryWork.Extensions
         throw new ArgumentNullException(nameof(sequence), "sequence can't be null");
       
       IEnumerator<T> enumerator = sequence.GetEnumerator();
-      if (enumerator.MoveNext())
-      {
-        Console.Write(enumerator.Current);
-        yield return enumerator.Current;
-      }
-      
+      if (!enumerator.MoveNext())
+          return sequence;
+
+      Console.Write(enumerator.Current);
+
       while (enumerator.MoveNext())
-      {
-        Console.Write("{0}{1}", delimiter, enumerator.Current);
-        yield return enumerator.Current;
-      }
+          Console.Write("{0}{1}", delimiter, enumerator.Current);
+
+      return sequence;
     }
 
     public static IEnumerable<T> PrintLine<T>(this IEnumerable<T> sequence, string delimiter = "")
@@ -30,9 +28,9 @@ namespace LaboratoryWork.Extensions
       if (sequence == null)
         throw new ArgumentNullException(nameof(sequence), "sequence can't be null");
 
-      foreach (var item in sequence.Print(delimiter))
-        yield return item;
+      sequence.Print(delimiter);
       Console.WriteLine();
+      return sequence;
     }
   }
 }
