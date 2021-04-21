@@ -19,7 +19,7 @@ namespace LaboratoryWork
 
       IEnumerable<double> sequence = matrix.ToEnumerable();
       if (sequence.Count(item => item < 0) > sequence.Count(item => item >= 0))
-        matrix.ToRows().Select(row => row.Where(item => item > 0).Sum()).PrintLine(", ").ToArray();
+        matrix.ToRows().Select(row => row.Where(item => item > 0).Sum()).PrintLine(", ");
       else
         Console.WriteLine("positive item count is greater or equal to negative one.");
     }
